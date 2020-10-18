@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+
+  
+  <title>从hashMap到bloom过滤器 | Lozzo笔记</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="baidu-site-verification" content="code-BQIeFcUdMo" />
+  <meta name="description" content="hashTable哈希表又叫散列表是一种键值对存储结构的一种数据结构，python的字典就采用这种数据结构，其效率在理想状态下是O(1)，但是在最差的情况下是O(n)，这儿我们按照思路自己实现一个，其基本实现过程为  申请一个定长m的列表作为存储空间，在每个位置上设置值为None，列表根据索引取值&#x2F;设置的时间复杂度是O(1) 列表上每个位置在有值的情况下，其数据结构为一个[key,value]的列">
+<meta property="og:type" content="article">
+<meta property="og:title" content="从hashMap到bloom过滤器">
+<meta property="og:url" content="https://blog.onemoresec.com/2019/10/18/%E4%BB%8EhashMap%E5%88%B0bloom%E8%BF%87%E6%BB%A4%E5%99%A8/index.html">
+<meta property="og:site_name" content="Lozzo笔记">
+<meta property="og:description" content="hashTable哈希表又叫散列表是一种键值对存储结构的一种数据结构，python的字典就采用这种数据结构，其效率在理想状态下是O(1)，但是在最差的情况下是O(n)，这儿我们按照思路自己实现一个，其基本实现过程为  申请一个定长m的列表作为存储空间，在每个位置上设置值为None，列表根据索引取值&#x2F;设置的时间复杂度是O(1) 列表上每个位置在有值的情况下，其数据结构为一个[key,value]的列">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://raw.githubusercontent.com/lozzo/Pic/main/image-20201018195218240.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/lozzo/Pic/main/image-20201018195112067.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/lozzo/Pic/main/image-20201018195534336.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/lozzo/Pic/main/image-20201018194722043.png">
+<meta property="article:published_time" content="2019-10-18T12:54:01.000Z">
+<meta property="article:modified_time" content="2020-10-18T13:16:01.870Z">
+<meta property="article:author" content="lozzo">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/lozzo/Pic/main/image-20201018195218240.png">
+  
+    <link rel="alternate" href="/atom.xml" title="Lozzo笔记" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 5.2.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Lozzo笔记</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://blog.onemoresec.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-从hashMap到bloom过滤器" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2019/10/18/%E4%BB%8EhashMap%E5%88%B0bloom%E8%BF%87%E6%BB%A4%E5%99%A8/" class="article-date">
+  <time datetime="2019-10-18T12:54:01.000Z" itemprop="datePublished">2019-10-18</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      从hashMap到bloom过滤器
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="hashTable"><a href="#hashTable" class="headerlink" title="hashTable"></a>hashTable</h2><p>哈希表又叫散列表是一种键值对存储结构的一种数据结构，python的字典就采用这种数据结构，其效率在理想状态下是O(1)，但是在最差的情况下是O(n)，这儿我们按照思路自己实现一个，其基本实现过程为</p>
+<ol>
+<li>申请一个定长m的列表作为存储空间，在每个位置上设置值为None，列表根据索引取值/设置的时间复杂度是O(1)</li>
+<li>列表上每个位置在有值的情况下，其数据结构为一个<code>[key,value]</code>的列表</li>
+<li>对设置的<code>key</code>进行hash求值后得到值p，再对p和m求模的到值n，这个值n就是该键值对存储在列表中的位置</li>
+<li>当被作为存储的列表的空间被占用到一定比例的时候进行扩容</li>
+</ol>
+<p><img src="https://raw.githubusercontent.com/lozzo/Pic/main/image-20201018195218240.png" alt="image-20201018195218240">例如设置<code>k-v为</code> <code>&#39;张三&#39;</code>对应<code>&#39;爱吃包子&#39;</code>,对<code>张三</code>求hash之后再与列表长度16进行求模,得到值2，即<code>&#39;张三&#39;</code>对应<code>&#39;爱吃包子&#39;</code>这个键值对就应该存储的list的2这个index位置上。取值时，进行同样的操作即可。</p>
+<p>但是当然上述情况可能会出现哈希冲突，即不同的<code>key</code>最后得到的n值是一样的，好巧不巧，罗老师爱馒头，而<code>罗老师</code>这个key算出在列表中的位置也是2，这可怎么办呢？</p>
+<p><img src="https://raw.githubusercontent.com/lozzo/Pic/main/image-20201018195112067.png" alt="image-20201018195112067">这种情况下，可以通过<code>开放寻值法</code>或者<code>链接法</code>来进行冲突解决。</p>
+<h4 id="开放寻值"><a href="#开放寻值" class="headerlink" title="开放寻值"></a>开放寻值</h4><p>开放寻值是指，当<code>张三</code>占据了2号位的时候，<code>罗老师</code>也想进到2号位来，这个时候后来的<code>罗老师</code>只能屈居后位来，填到3号位上去,如果3号位也被占用了，就只能去4号位。</p>
+<p><img src="https://raw.githubusercontent.com/lozzo/Pic/main/image-20201018195534336.png" alt="image-20201018195534336"></p>
+<p>在查找<code>罗老师</code>的时候，先通过<code>hash(&#39;罗老师&#39;)%16=2</code>求出罗老师在2号位，如果2号位存的值的key不是<code>罗老师</code>，那我们就去找3号位，如果3号位也不是<code>罗老师</code>，那我们就找4号位，以此类推直到找到<code>罗老师</code></p>
+<p>代码实现</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">HashTable</span>(<span class="params"><span class="built_in">object</span></span>):</span></span><br><span class="line"></span><br><span class="line">    _reload_factor = <span class="number">0.75</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self, size</span>):</span></span><br><span class="line">        self.size = size</span><br><span class="line">        self.used_index = <span class="number">0</span></span><br><span class="line">        self._container = [<span class="literal">None</span> <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(size)]</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">_get_index</span>(<span class="params">self, key</span>):</span></span><br><span class="line">        <span class="comment"># return hash(key) % (self.size - 1)</span></span><br><span class="line">        <span class="keyword">if</span> key <span class="keyword">in</span> [<span class="string">&quot;x&quot;</span>,<span class="string">&quot;y&quot;</span>]:</span><br><span class="line">            <span class="keyword">return</span> <span class="number">3</span></span><br><span class="line">        <span class="keyword">return</span> <span class="number">4</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">_loop_index</span>(<span class="params">self, index</span>):</span></span><br><span class="line">        <span class="comment"># 循环的时候不重新填到之前的位置</span></span><br><span class="line">        <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(self.size - <span class="number">1</span>):</span><br><span class="line">            <span class="keyword">if</span> index &gt; self.size - <span class="number">1</span>:</span><br><span class="line">                index = <span class="number">0</span></span><br><span class="line">            <span class="keyword">yield</span> index</span><br><span class="line">            index += <span class="number">1</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">get</span>(<span class="params">self, key</span>):</span></span><br><span class="line">        <span class="keyword">for</span> index <span class="keyword">in</span> self._loop_index(self._get_index(key)):</span><br><span class="line">            data = self._container[index]</span><br><span class="line">            <span class="keyword">if</span> data <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">                <span class="keyword">if</span> data[<span class="number">0</span>] == key:</span><br><span class="line">                    <span class="keyword">return</span> data[<span class="number">1</span>]</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">None</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">set</span>(<span class="params">self, key, value</span>):</span></span><br><span class="line">        <span class="comment"># 计算是否需要扩容</span></span><br><span class="line">        <span class="keyword">if</span> self.used_index / self.size &gt; self._reload_factor:</span><br><span class="line">            self._reload()</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> index <span class="keyword">in</span> self._loop_index(self._get_index(key)):</span><br><span class="line">            data = self._container[index]</span><br><span class="line">            <span class="keyword">if</span> data <span class="keyword">is</span> <span class="literal">None</span>:</span><br><span class="line">                self._container[index] = [key, value]</span><br><span class="line">                self.used_index += <span class="number">1</span></span><br><span class="line">                <span class="keyword">return</span></span><br><span class="line">            <span class="keyword">if</span> data[<span class="number">0</span>] == key:</span><br><span class="line">                self._container[index] = [key, value]</span><br><span class="line">                <span class="keyword">return</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># 重新申请长度的时候这儿我们设置为之前的两倍</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">_reload</span>(<span class="params">self</span>):</span></span><br><span class="line">        old_container = self._container</span><br><span class="line">        self.size *= <span class="number">2</span></span><br><span class="line">        self._container = [<span class="literal">None</span> <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(self.size)]</span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> old_container:</span><br><span class="line">            <span class="keyword">if</span> i <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">                self.<span class="built_in">set</span>(i[<span class="number">0</span>], i[<span class="number">1</span>])</span><br><span class="line"></span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">delete</span>(<span class="params">self, key</span>):</span></span><br><span class="line">        del_index = <span class="number">0</span></span><br><span class="line">        <span class="keyword">for</span> index <span class="keyword">in</span> self._loop_index(self._get_index(key)):</span><br><span class="line">            data = self._container[index]</span><br><span class="line">            <span class="keyword">if</span> data <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span> <span class="keyword">and</span> data[<span class="number">0</span>] == key:</span><br><span class="line">                self._container[index] = <span class="literal">None</span></span><br><span class="line">                self.used_index -= <span class="number">1</span></span><br><span class="line">                del_index = index</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">        <span class="comment"># 将删除位置到其右边下一个空位之间所有的元素重新散列</span></span><br><span class="line">        <span class="keyword">for</span> index <span class="keyword">in</span> self._loop_index(del_index+<span class="number">1</span>):</span><br><span class="line">            data = self._container[index]</span><br><span class="line">            <span class="keyword">if</span> data <span class="keyword">is</span> <span class="literal">None</span>:</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line">            self._container[index] = <span class="literal">None</span></span><br><span class="line">            self.<span class="built_in">set</span>(*data)</span><br><span class="line">            self.used_index -=<span class="number">1</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="链接法"><a href="#链接法" class="headerlink" title="链接法"></a>链接法</h3><p>链接法是指，当<code>张三</code>占据了2号位的时候，<code>罗老师</code>也想进到2号位来，那么这个时候我们二号位上的数据结构改变成<code>[key,value]</code>为元素的一个链表，把<code>[&quot;罗老师&quot;,&quot;爱吃馒头&quot;]</code>作为链表上的节点的元素的节点添加到<code>[&quot;张三&quot;,&quot;爱吃包子&quot;]</code>作为元素的链表的节点的后面</p>
+<p><img src="https://raw.githubusercontent.com/lozzo/Pic/main/image-20201018194722043.png" alt="image-20201018194722043"></p>
+<p>当需要找到<code>罗老师</code>的时候，根据<code>hash(&#39;罗老师&#39;)%15=2</code>求出罗老师在2号位， 然后遍历2号位上的链表，直到找到<code>罗老师</code></p>
+<p>下面是代码实现</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h2 id="布隆过滤器"><a href="#布隆过滤器" class="headerlink" title="布隆过滤器"></a>布隆过滤器</h2><p>上面讲的哈希表和布隆过滤器有什么联系呢</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://blog.onemoresec.com/2019/10/18/%E4%BB%8EhashMap%E5%88%B0bloom%E8%BF%87%E6%BB%A4%E5%99%A8/" data-id="ckgf8n0lc00000ah70pmxg74k" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+    
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/10/">十月 2019</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2019/10/18/%E4%BB%8EhashMap%E5%88%B0bloom%E8%BF%87%E6%BB%A4%E5%99%A8/">从hashMap到bloom过滤器</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2020 lozzo<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+
+  
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+  </div>
+</body>
+</html>
