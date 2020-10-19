@@ -118,14 +118,14 @@
 <ol>
 <li>当我们插入<code>&#39;张三&#39;</code>时分别通过三个hash函数和bitmap的长度进行求模（就如同上面hashTable一样）求的分别的index，然后将这些index位上的bit设置为1（无论之前的状态是0是1）</li>
 <li>当查询<code>&#39;罗老师&#39;</code>的时候，一样通过这三个hash函数求得分别的index，然后去取对应的bit的状态，如果都是1则<code>&#39;罗老师&#39;</code>是存在的，如果有任何一位不是0，就如图所示，<code>hash2</code>函数得到的index 15 是0，则说明<code>&#39;罗老师&#39;</code>之前没有被设置过</li>
-<li>上述情况如果<code>&#39;罗老师&#39;</code>并没有被插入过，但是好巧不巧<code>&#39;李四&#39;</code>把13号位设置成了1，那么当我们查询<code>&#39;罗老师&#39;</code>在不在的时候就有可能出现误判，究其原因还是因为hash碰撞导致的。这也就是上面所说的存在误判的原因<img src="../../../../Library/Application%20Support/typora-user-images/image-20201019224728994.png" alt="image-20201019224728994"></li>
+<li>上述情况如果<code>&#39;罗老师&#39;</code>并没有被插入过，但是好巧不巧<code>&#39;李四&#39;</code>把13号位设置成了1，那么当我们查询<code>&#39;罗老师&#39;</code>在不在的时候就有可能出现误判，究其原因还是因为hash碰撞导致的。这也就是上面所说的存在误判的原因<img src="https://raw.githubusercontent.com/lozzo/Pic/main/image-20201019224728994.png" alt="image-20201019224728994"></li>
 <li>不能删除的原因是因为一个bit位可能被多个<code>key</code>置为1过，如果将此位重置成0，那么将影响到多个key的查询。这就是上面所讲的删除困难的所在。</li>
 </ol>
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="https://blog.onemoresec.com/2019/10/18/%E4%BB%8EhashMap%E5%88%B0bloom%E8%BF%87%E6%BB%A4%E5%99%A8/" data-id="ckggnql7g0000b4h7bbmx9426" class="article-share-link">Share</a>
+      <a data-url="https://blog.onemoresec.com/2019/10/18/%E4%BB%8EhashMap%E5%88%B0bloom%E8%BF%87%E6%BB%A4%E5%99%A8/" data-id="ckggntbbk0000oth7e0kx3lo5" class="article-share-link">Share</a>
       
       
     </footer>
