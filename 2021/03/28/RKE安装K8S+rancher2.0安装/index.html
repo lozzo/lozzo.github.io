@@ -1,0 +1,503 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=&#34;auto&#34;>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="个人笔记">
+  <meta name="author" content="lozzo">
+  <meta name="keywords" content="">
+  
+  <title>RKE安装K8S+rancher2.0安装 - Lozzo笔记</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4.0.0/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10.4.0/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+  
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"blog.onemoresec.com","root":"/","version":"1.8.9-a","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null}}};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.2.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand"
+       href="/">&nbsp;<strong>lozzo笔记</strong>&nbsp;</a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" target="_blank" rel="noopener" href="https://github.com/lozzo">
+                <i class="iconfont icon-github-fill"></i>
+                github
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" data-toggle="modal" data-target="#modalSearch">&nbsp;<i
+                class="iconfont icon-search"></i>&nbsp;</a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" href="javascript:">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/rkek8s.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="RKE安装K8S+rancher2.0安装">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2021-03-28 20:54" pubdate>
+        2021年3月28日 晚上
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      2k 字
+    </span>
+  
+
+  
+    
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      34
+       分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">RKE安装K8S+rancher2.0安装</h1>
+            
+            <div class="markdown-body">
+              <p>Debian GNU/Linux 10 (buster) 下安装流水帐</p>
+<p>安装docker</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs sh">apt search show docekr -a<br></code></pre></td></tr></table></figure>
+
+<p>选择合适版本docker进行安装</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><code class="hljs sh">cat &gt; /etc/docker/daemon.json &lt;&lt;<span class="hljs-string">EOF</span><br><span class="hljs-string">&#123;</span><br><span class="hljs-string">  &quot;exec-opts&quot;: [&quot;native.cgroupdriver=systemd&quot;],</span><br><span class="hljs-string">  &quot;log-driver&quot;: &quot;json-file&quot;,</span><br><span class="hljs-string">  &quot;log-opts&quot;: &#123;</span><br><span class="hljs-string">    &quot;max-size&quot;: &quot;100m&quot;</span><br><span class="hljs-string">  &#125;,</span><br><span class="hljs-string">  &quot;registry-mirrors&quot;: [&quot;https://adw6g9fr.mirror.aliyuncs.com&quot;],</span><br><span class="hljs-string">  &quot;storage-driver&quot;: &quot;overlay2&quot;,</span><br><span class="hljs-string">  &quot;storage-opts&quot;: [</span><br><span class="hljs-string">    &quot;overlay2.override_kernel_check=true&quot;</span><br><span class="hljs-string">  ]</span><br><span class="hljs-string">&#125;</span><br><span class="hljs-string">EOF</span><br>systemctl restart docker<br>swapoff -a<br>yes | cp /etc/fstab /etc/fstab_bak<br>cat /etc/fstab_bak |grep -v swap &gt; /etc/fstab<br><span class="hljs-comment"># 修改 /etc/sysctl.conf</span><br><span class="hljs-comment"># 如果有配置，则修改</span><br>sed -i <span class="hljs-string">&quot;s#^net.ipv4.ip_forward.*#net.ipv4.ip_forward=1#g&quot;</span>  /etc/sysctl.conf<br>sed -i <span class="hljs-string">&quot;s#^net.bridge.bridge-nf-call-ip6tables.*#net.bridge.bridge-nf-call-ip6tables=1#g&quot;</span>  /etc/sysctl.conf<br>sed -i <span class="hljs-string">&quot;s#^net.bridge.bridge-nf-call-iptables.*#net.bridge.bridge-nf-call-iptables=1#g&quot;</span>  /etc/sysctl.conf<br>sed -i <span class="hljs-string">&quot;s#^net.ipv6.conf.all.disable_ipv6.*#net.ipv6.conf.all.disable_ipv6=1#g&quot;</span>  /etc/sysctl.conf<br>sed -i <span class="hljs-string">&quot;s#^net.ipv6.conf.default.disable_ipv6.*#net.ipv6.conf.default.disable_ipv6=1#g&quot;</span>  /etc/sysctl.conf<br>sed -i <span class="hljs-string">&quot;s#^net.ipv6.conf.lo.disable_ipv6.*#net.ipv6.conf.lo.disable_ipv6=1#g&quot;</span>  /etc/sysctl.conf<br>sed -i <span class="hljs-string">&quot;s#^net.ipv6.conf.all.forwarding.*#net.ipv6.conf.all.forwarding=1#g&quot;</span>  /etc/sysctl.conf<br><span class="hljs-comment"># 可能没有，追加</span><br><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;net.ipv4.ip_forward = 1&quot;</span> &gt;&gt; /etc/sysctl.conf<br><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;net.bridge.bridge-nf-call-ip6tables = 1&quot;</span> &gt;&gt; /etc/sysctl.conf<br><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;net.bridge.bridge-nf-call-iptables = 1&quot;</span> &gt;&gt; /etc/sysctl.conf<br><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;net.ipv6.conf.all.disable_ipv6 = 1&quot;</span> &gt;&gt; /etc/sysctl.conf<br><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;net.ipv6.conf.default.disable_ipv6 = 1&quot;</span> &gt;&gt; /etc/sysctl.conf<br><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;net.ipv6.conf.lo.disable_ipv6 = 1&quot;</span> &gt;&gt; /etc/sysctl.conf<br><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;net.ipv6.conf.all.forwarding = 1&quot;</span>  &gt;&gt; /etc/sysctl.conf<br><br><span class="hljs-comment"># 执行命令以应用</span><br>sysctl --system<br><br>systemctl daemon-reload<br><span class="hljs-comment"># 可以选择最新版本</span><br>wget https://github.com/rancher/rke/releases/download/v1.2.4-rc9/rke_linux-amd64<br>mv rke_linux-amd64 /usr/<span class="hljs-built_in">local</span>/bin/rke<br>chmod +x /usr/<span class="hljs-built_in">local</span>/bin/rke<br><span class="hljs-comment"># 生成配置，按照交互式提示进行输入</span><br>rke config --name cluster.yml<br><span class="hljs-comment"># 这一步需要各主机间能够互相访问，可以是在交互式界面内进行调整，或者自己调整过</span><br>rke up --config cluster.yml<br><span class="hljs-comment"># 安装完成后</span><br>scp kube_config_cluster.yml ~/.kube/config<br></code></pre></td></tr></table></figure>
+
+<p>安装rancher(这一步就可以不再服务器上进行了，只需要<code>~/.kube/config</code> 能够访问的地址就行)</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs sh"><span class="hljs-comment"># 使用helm进行安装 https://helm.sh/zh/docs/intro/install/</span><br>curl https://baltocdn.com/helm/signing.asc | sudo apt-key add -<br>sudo apt-get install apt-transport-https --yes<br><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;deb https://baltocdn.com/helm/stable/debian/ all main&quot;</span> | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list<br>sudo apt-get update<br>sudo apt-get install helm<br><br><span class="hljs-comment"># 添加命名空间</span><br>kubectl create namespace cattle-system<br></code></pre></td></tr></table></figure>
+
+<p>证书生成脚本</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br></pre></td><td class="code"><pre><code class="hljs sh"><span class="hljs-meta">#!/bin/bash -e</span><br><br><span class="hljs-built_in">help</span> ()<br>&#123;<br>    <span class="hljs-built_in">echo</span>  <span class="hljs-string">&#x27; ================================================================ &#x27;</span><br>    <span class="hljs-built_in">echo</span>  <span class="hljs-string">&#x27; --ssl-domain: 生成ssl证书需要的主域名，如不指定则默认为localhost，如果是ip访问服务，则可忽略；&#x27;</span><br>    <span class="hljs-built_in">echo</span>  <span class="hljs-string">&#x27; --ssl-trusted-ip: 一般ssl证书只信任域名的访问请求，有时候需要使用ip去访问server，那么需要给ssl证书添加扩展IP，多个IP用逗号隔开；&#x27;</span><br>    <span class="hljs-built_in">echo</span>  <span class="hljs-string">&#x27; --ssl-trusted-domain: 如果想多个域名访问，则添加扩展域名（SSL_TRUSTED_DOMAIN）,多个扩展域名用逗号隔开；&#x27;</span><br>    <span class="hljs-built_in">echo</span>  <span class="hljs-string">&#x27; --ssl-size: ssl加密位数，默认2048；&#x27;</span><br>    <span class="hljs-built_in">echo</span>  <span class="hljs-string">&#x27; --ssl-date: ssl有效期，默认10年；&#x27;</span><br>    <span class="hljs-built_in">echo</span>  <span class="hljs-string">&#x27; --ca-date: ca有效期，默认10年；&#x27;</span><br>    <span class="hljs-built_in">echo</span>  <span class="hljs-string">&#x27; --ssl-cn: 国家代码(2个字母的代号),默认CN;&#x27;</span><br>    <span class="hljs-built_in">echo</span>  <span class="hljs-string">&#x27; 使用示例:&#x27;</span><br>    <span class="hljs-built_in">echo</span>  <span class="hljs-string">&#x27; ./create_self-signed-cert.sh --ssl-domain=www.test.com --ssl-trusted-domain=www.test2.com \ &#x27;</span><br>    <span class="hljs-built_in">echo</span>  <span class="hljs-string">&#x27; --ssl-trusted-ip=1.1.1.1,2.2.2.2,3.3.3.3 --ssl-size=2048 --ssl-date=3650&#x27;</span><br>    <span class="hljs-built_in">echo</span>  <span class="hljs-string">&#x27; ================================================================&#x27;</span><br>&#125;<br><br><span class="hljs-keyword">case</span> <span class="hljs-string">&quot;<span class="hljs-variable">$1</span>&quot;</span> <span class="hljs-keyword">in</span><br>    -h|--<span class="hljs-built_in">help</span>) <span class="hljs-built_in">help</span>; <span class="hljs-built_in">exit</span>;;<br><span class="hljs-keyword">esac</span><br><br><span class="hljs-keyword">if</span> [[ <span class="hljs-variable">$1</span> == <span class="hljs-string">&#x27;&#x27;</span> ]];<span class="hljs-keyword">then</span><br>    <span class="hljs-built_in">help</span>;<br>    <span class="hljs-built_in">exit</span>;<br><span class="hljs-keyword">fi</span><br><br>CMDOPTS=<span class="hljs-string">&quot;$*&quot;</span><br><span class="hljs-keyword">for</span> OPTS <span class="hljs-keyword">in</span> <span class="hljs-variable">$CMDOPTS</span>;<br><span class="hljs-keyword">do</span><br>    key=$(<span class="hljs-built_in">echo</span> <span class="hljs-variable">$&#123;OPTS&#125;</span> | awk -F<span class="hljs-string">&quot;=&quot;</span> <span class="hljs-string">&#x27;&#123;print $1&#125;&#x27;</span> )<br>    value=$(<span class="hljs-built_in">echo</span> <span class="hljs-variable">$&#123;OPTS&#125;</span> | awk -F<span class="hljs-string">&quot;=&quot;</span> <span class="hljs-string">&#x27;&#123;print $2&#125;&#x27;</span> )<br>    <span class="hljs-keyword">case</span> <span class="hljs-string">&quot;<span class="hljs-variable">$key</span>&quot;</span> <span class="hljs-keyword">in</span><br>        --ssl-domain) SSL_DOMAIN=<span class="hljs-variable">$value</span> ;;<br>        --ssl-trusted-ip) SSL_TRUSTED_IP=<span class="hljs-variable">$value</span> ;;<br>        --ssl-trusted-domain) SSL_TRUSTED_DOMAIN=<span class="hljs-variable">$value</span> ;;<br>        --ssl-size) SSL_SIZE=<span class="hljs-variable">$value</span> ;;<br>        --ssl-date) SSL_DATE=<span class="hljs-variable">$value</span> ;;<br>        --ca-date) CA_DATE=<span class="hljs-variable">$value</span> ;;<br>        --ssl-cn) CN=<span class="hljs-variable">$value</span> ;;<br>    <span class="hljs-keyword">esac</span><br><span class="hljs-keyword">done</span><br><br><span class="hljs-comment">#CA相关配置</span><br>CA_DATE=<span class="hljs-variable">$&#123;CA_DATE:-3650&#125;</span><br>CA_KEY=<span class="hljs-variable">$&#123;CA_KEY:-cakey.pem&#125;</span><br>CA_CERT=<span class="hljs-variable">$&#123;CA_CERT:-cacerts.pem&#125;</span><br>CA_DOMAIN=localhost<br><br><span class="hljs-comment">#ssl相关配置</span><br>SSL_CONFIG=<span class="hljs-variable">$&#123;SSL_CONFIG:-<span class="hljs-variable">$PWD</span>/openssl.cnf&#125;</span><br>SSL_DOMAIN=<span class="hljs-variable">$&#123;SSL_DOMAIN:-localhost&#125;</span><br>SSL_DATE=<span class="hljs-variable">$&#123;SSL_DATE:-3650&#125;</span><br>SSL_SIZE=<span class="hljs-variable">$&#123;SSL_SIZE:-2048&#125;</span><br><br><span class="hljs-comment">##国家代码(2个字母的代号),默认CN;</span><br>CN=<span class="hljs-variable">$&#123;CN:-CN&#125;</span><br><br>SSL_KEY=<span class="hljs-variable">$SSL_DOMAIN</span>.key<br>SSL_CSR=<span class="hljs-variable">$SSL_DOMAIN</span>.csr<br>SSL_CERT=<span class="hljs-variable">$SSL_DOMAIN</span>.crt<br><br><span class="hljs-built_in">echo</span> -e <span class="hljs-string">&quot;\033[32m ---------------------------- \033[0m&quot;</span><br><span class="hljs-built_in">echo</span> -e <span class="hljs-string">&quot;\033[32m       | 生成 SSL Cert |       \033[0m&quot;</span><br><span class="hljs-built_in">echo</span> -e <span class="hljs-string">&quot;\033[32m ---------------------------- \033[0m&quot;</span><br><br><span class="hljs-keyword">if</span> [[ -e ./<span class="hljs-variable">$&#123;CA_KEY&#125;</span> ]]; <span class="hljs-keyword">then</span><br>    <span class="hljs-built_in">echo</span> -e <span class="hljs-string">&quot;\033[32m ====&gt; 1. 发现已存在CA私钥，备份&quot;</span><span class="hljs-variable">$&#123;CA_KEY&#125;</span><span class="hljs-string">&quot;为&quot;</span><span class="hljs-variable">$&#123;CA_KEY&#125;</span><span class="hljs-string">&quot;-bak，然后重新创建 \033[0m&quot;</span><br>    mv <span class="hljs-variable">$&#123;CA_KEY&#125;</span> <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;CA_KEY&#125;</span>&quot;</span>-bak<br>    openssl genrsa -out <span class="hljs-variable">$&#123;CA_KEY&#125;</span> <span class="hljs-variable">$&#123;SSL_SIZE&#125;</span><br><span class="hljs-keyword">else</span><br>    <span class="hljs-built_in">echo</span> -e <span class="hljs-string">&quot;\033[32m ====&gt; 1. 生成新的CA私钥 <span class="hljs-variable">$&#123;CA_KEY&#125;</span> \033[0m&quot;</span><br>    openssl genrsa -out <span class="hljs-variable">$&#123;CA_KEY&#125;</span> <span class="hljs-variable">$&#123;SSL_SIZE&#125;</span><br><span class="hljs-keyword">fi</span><br><br><span class="hljs-keyword">if</span> [[ -e ./<span class="hljs-variable">$&#123;CA_CERT&#125;</span> ]]; <span class="hljs-keyword">then</span><br>    <span class="hljs-built_in">echo</span> -e <span class="hljs-string">&quot;\033[32m ====&gt; 2. 发现已存在CA证书，先备份&quot;</span><span class="hljs-variable">$&#123;CA_CERT&#125;</span><span class="hljs-string">&quot;为&quot;</span><span class="hljs-variable">$&#123;CA_CERT&#125;</span><span class="hljs-string">&quot;-bak，然后重新创建 \033[0m&quot;</span><br>    mv <span class="hljs-variable">$&#123;CA_CERT&#125;</span> <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;CA_CERT&#125;</span>&quot;</span>-bak<br>    openssl req -x509 -sha256 -new -nodes -key <span class="hljs-variable">$&#123;CA_KEY&#125;</span> -days <span class="hljs-variable">$&#123;CA_DATE&#125;</span> -out <span class="hljs-variable">$&#123;CA_CERT&#125;</span> -subj <span class="hljs-string">&quot;/C=<span class="hljs-variable">$&#123;CN&#125;</span>/CN=<span class="hljs-variable">$&#123;CA_DOMAIN&#125;</span>&quot;</span><br><span class="hljs-keyword">else</span><br>    <span class="hljs-built_in">echo</span> -e <span class="hljs-string">&quot;\033[32m ====&gt; 2. 生成新的CA证书 <span class="hljs-variable">$&#123;CA_CERT&#125;</span> \033[0m&quot;</span><br>    openssl req -x509 -sha256 -new -nodes -key <span class="hljs-variable">$&#123;CA_KEY&#125;</span> -days <span class="hljs-variable">$&#123;CA_DATE&#125;</span> -out <span class="hljs-variable">$&#123;CA_CERT&#125;</span> -subj <span class="hljs-string">&quot;/C=<span class="hljs-variable">$&#123;CN&#125;</span>/CN=<span class="hljs-variable">$&#123;CA_DOMAIN&#125;</span>&quot;</span><br><span class="hljs-keyword">fi</span><br><br><span class="hljs-built_in">echo</span> -e <span class="hljs-string">&quot;\033[32m ====&gt; 3. 生成Openssl配置文件 <span class="hljs-variable">$&#123;SSL_CONFIG&#125;</span> \033[0m&quot;</span><br>cat &gt; <span class="hljs-variable">$&#123;SSL_CONFIG&#125;</span> &lt;&lt;<span class="hljs-string">EOM</span><br><span class="hljs-string">[req]</span><br><span class="hljs-string">req_extensions = v3_req</span><br><span class="hljs-string">distinguished_name = req_distinguished_name</span><br><span class="hljs-string">[req_distinguished_name]</span><br><span class="hljs-string">[ v3_req ]</span><br><span class="hljs-string">basicConstraints = CA:FALSE</span><br><span class="hljs-string">keyUsage = nonRepudiation, digitalSignature, keyEncipherment</span><br><span class="hljs-string">extendedKeyUsage = clientAuth, serverAuth</span><br><span class="hljs-string">EOM</span><br><br><span class="hljs-keyword">if</span> [[ -n <span class="hljs-variable">$&#123;SSL_TRUSTED_IP&#125;</span> || -n <span class="hljs-variable">$&#123;SSL_TRUSTED_DOMAIN&#125;</span> ]]; <span class="hljs-keyword">then</span><br>    cat &gt;&gt; <span class="hljs-variable">$&#123;SSL_CONFIG&#125;</span> &lt;&lt;<span class="hljs-string">EOM</span><br><span class="hljs-string">subjectAltName = @alt_names</span><br><span class="hljs-string">[alt_names]</span><br><span class="hljs-string">EOM</span><br>    IFS=<span class="hljs-string">&quot;,&quot;</span><br>    dns=(<span class="hljs-variable">$&#123;SSL_TRUSTED_DOMAIN&#125;</span>)<br>    dns+=(<span class="hljs-variable">$&#123;SSL_DOMAIN&#125;</span>)<br>    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;!dns[@]&#125;</span>&quot;</span>; <span class="hljs-keyword">do</span><br>      <span class="hljs-built_in">echo</span> DNS.$((i+<span class="hljs-number">1</span>)) = <span class="hljs-variable">$&#123;dns[$i]&#125;</span> &gt;&gt; <span class="hljs-variable">$&#123;SSL_CONFIG&#125;</span><br>    <span class="hljs-keyword">done</span><br><br>    <span class="hljs-keyword">if</span> [[ -n <span class="hljs-variable">$&#123;SSL_TRUSTED_IP&#125;</span> ]]; <span class="hljs-keyword">then</span><br>        ip=(<span class="hljs-variable">$&#123;SSL_TRUSTED_IP&#125;</span>)<br>        <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;!ip[@]&#125;</span>&quot;</span>; <span class="hljs-keyword">do</span><br>          <span class="hljs-built_in">echo</span> IP.$((i+<span class="hljs-number">1</span>)) = <span class="hljs-variable">$&#123;ip[$i]&#125;</span> &gt;&gt; <span class="hljs-variable">$&#123;SSL_CONFIG&#125;</span><br>        <span class="hljs-keyword">done</span><br>    <span class="hljs-keyword">fi</span><br><span class="hljs-keyword">fi</span><br><br><span class="hljs-built_in">echo</span> -e <span class="hljs-string">&quot;\033[32m ====&gt; 4. 生成服务SSL KEY <span class="hljs-variable">$&#123;SSL_KEY&#125;</span> \033[0m&quot;</span><br>openssl genrsa -out <span class="hljs-variable">$&#123;SSL_KEY&#125;</span> <span class="hljs-variable">$&#123;SSL_SIZE&#125;</span><br><br><span class="hljs-built_in">echo</span> -e <span class="hljs-string">&quot;\033[32m ====&gt; 5. 生成服务SSL CSR <span class="hljs-variable">$&#123;SSL_CSR&#125;</span> \033[0m&quot;</span><br>openssl req -sha256 -new -key <span class="hljs-variable">$&#123;SSL_KEY&#125;</span> -out <span class="hljs-variable">$&#123;SSL_CSR&#125;</span> -subj <span class="hljs-string">&quot;/C=<span class="hljs-variable">$&#123;CN&#125;</span>/CN=<span class="hljs-variable">$&#123;SSL_DOMAIN&#125;</span>&quot;</span> -config <span class="hljs-variable">$&#123;SSL_CONFIG&#125;</span><br><br><span class="hljs-built_in">echo</span> -e <span class="hljs-string">&quot;\033[32m ====&gt; 6. 生成服务SSL CERT <span class="hljs-variable">$&#123;SSL_CERT&#125;</span> \033[0m&quot;</span><br>openssl x509 -sha256 -req -<span class="hljs-keyword">in</span> <span class="hljs-variable">$&#123;SSL_CSR&#125;</span> -CA <span class="hljs-variable">$&#123;CA_CERT&#125;</span> \<br>    -CAkey <span class="hljs-variable">$&#123;CA_KEY&#125;</span> -CAcreateserial -out <span class="hljs-variable">$&#123;SSL_CERT&#125;</span> \<br>    -days <span class="hljs-variable">$&#123;SSL_DATE&#125;</span> -extensions v3_req \<br>    -extfile <span class="hljs-variable">$&#123;SSL_CONFIG&#125;</span><br><br><span class="hljs-built_in">echo</span> -e <span class="hljs-string">&quot;\033[32m ====&gt; 7. 证书制作完成 \033[0m&quot;</span><br><span class="hljs-built_in">echo</span><br><span class="hljs-built_in">echo</span> -e <span class="hljs-string">&quot;\033[32m ====&gt; 8. 以YAML格式输出结果 \033[0m&quot;</span><br><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;----------------------------------------------------------&quot;</span><br><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;ca_key: |&quot;</span><br>cat <span class="hljs-variable">$CA_KEY</span> | sed <span class="hljs-string">&#x27;s/^/  /&#x27;</span><br><span class="hljs-built_in">echo</span><br><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;ca_cert: |&quot;</span><br>cat <span class="hljs-variable">$CA_CERT</span> | sed <span class="hljs-string">&#x27;s/^/  /&#x27;</span><br><span class="hljs-built_in">echo</span><br><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;ssl_key: |&quot;</span><br>cat <span class="hljs-variable">$SSL_KEY</span> | sed <span class="hljs-string">&#x27;s/^/  /&#x27;</span><br><span class="hljs-built_in">echo</span><br><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;ssl_csr: |&quot;</span><br>cat <span class="hljs-variable">$SSL_CSR</span> | sed <span class="hljs-string">&#x27;s/^/  /&#x27;</span><br><span class="hljs-built_in">echo</span><br><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;ssl_cert: |&quot;</span><br>cat <span class="hljs-variable">$SSL_CERT</span> | sed <span class="hljs-string">&#x27;s/^/  /&#x27;</span><br><span class="hljs-built_in">echo</span><br><br><span class="hljs-built_in">echo</span> -e <span class="hljs-string">&quot;\033[32m ====&gt; 9. 附加CA证书到Cert文件 \033[0m&quot;</span><br>cat <span class="hljs-variable">$&#123;CA_CERT&#125;</span> &gt;&gt; <span class="hljs-variable">$&#123;SSL_CERT&#125;</span><br><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;ssl_cert: |&quot;</span><br>cat <span class="hljs-variable">$SSL_CERT</span> | sed <span class="hljs-string">&#x27;s/^/  /&#x27;</span><br><span class="hljs-built_in">echo</span><br><br><span class="hljs-built_in">echo</span> -e <span class="hljs-string">&quot;\033[32m ====&gt; 10. 重命名服务证书 \033[0m&quot;</span><br><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;cp <span class="hljs-variable">$&#123;SSL_DOMAIN&#125;</span>.key tls.key&quot;</span><br>cp <span class="hljs-variable">$&#123;SSL_DOMAIN&#125;</span>.key tls.key<br><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;cp <span class="hljs-variable">$&#123;SSL_DOMAIN&#125;</span>.crt tls.crt&quot;</span><br>cp <span class="hljs-variable">$&#123;SSL_DOMAIN&#125;</span>.crt tls.crt<br></code></pre></td></tr></table></figure>
+
+<p>上述证书生成脚本我们命名为<code>cert.sh</code></p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><code class="hljs sh"><span class="hljs-comment"># 生成证书</span><br>./cert.sh --ssl-domain=rancher.testchrome.net --ssl-size=2048 --ssl-date=3650<br>ls -lrt<br>-rwxr-xr-x 1 root root      5306 Mar 26 06:30 cert.sh<br>-rw------- 1 root root      1675 Mar 26 06:30 cakey.pem<br>-rw-r--r-- 1 root root      1147 Mar 26 06:30 cacerts.pem<br>-rw-r--r-- 1 root root       241 Mar 26 06:30 openssl.cnf<br>-rw------- 1 root root      1679 Mar 26 06:30 rancher.testchrome.net.key<br>-rw-r--r-- 1 root root      1025 Mar 26 06:30 rancher.testchrome.net.csr<br>-rw-r--r-- 1 root root        41 Mar 26 06:30 cacerts.srl<br>-rw-r--r-- 1 root root      2278 Mar 26 06:30 rancher.testchrome.net.crt<br>-rw------- 1 root root      1679 Mar 26 06:30 tls.key<br>-rw-r--r-- 1 root root      2278 Mar 26 06:30 tls.crt<br><span class="hljs-comment"># ！！！！添加secret前要注意切换到cattle-system命名空间，否着rancher安装后会一致处于ContainerCreating</span><br>kubectl config set-context --current --namespace=cattle-system<br><br><span class="hljs-comment"># 服务证书，这个证书名称和rancher创建出来的cattle的deploy里面的证书名称需要一致</span><br>kubectl create secret tls tls-rancher-ingress --cert=tls.crt  --key=tls.key<br><span class="hljs-comment"># 私钥证书</span><br>kubectl create secret generic tls-ca --from-file=cacerts.pem<br><br><span class="hljs-comment"># 添加仓库</span><br>helm repo add rancher-stable https://releases.rancher.com/server-charts/stable<br>helm update<br><span class="hljs-comment"># 安装rancher</span><br>helm install rancher rancher-stable/rancher \<br>--namespace cattle-system \<br>--<span class="hljs-built_in">set</span> hostname=rancher.testchrome.net \<br>--<span class="hljs-built_in">set</span> ingress.tls.source=secret \<br>--<span class="hljs-built_in">set</span> privateCA=<span class="hljs-literal">true</span><br></code></pre></td></tr></table></figure>
+
+<p>当所有节点onReady的时候，就可以访问<a target="_blank" rel="noopener" href="https://rancher.testchrome.net/">https://rancher.testchrome.net</a> 进行后续配置了</p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/k8s/">k8s</a>
+                    
+                      <a class="hover-with-bg" href="/tags/linux/">linux</a>
+                    
+                      <a class="hover-with-bg" href="/tags/rancher/">rancher</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2021/03/29/python%E7%89%88%E6%9C%AC%E7%9A%84playwright%E5%9C%A8%E5%90%AF%E5%8A%A8%E6%B5%8F%E8%A7%88%E5%99%A8%E8%BF%9B%E7%A8%8B%E7%9A%84%E6%97%B6%E5%80%99%E6%98%AF%E7%94%A8nodejs%E7%89%88%E6%9C%AC%E7%9A%84%E8%BF%9B%E8%A1%8C%E5%90%AF%E5%8A%A8%E7%9A%84/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">playwright远程调用和简单实现</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2019/10/18/%E4%BB%8EhashMap%E5%88%B0bloom%E8%BF%87%E6%BB%A4%E5%99%A8/">
+                        <span class="hidden-mobile">从hashMap到bloom过滤器</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/debouncer.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/tocbot@4.12.0/dist/tocbot.min.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4.3.0/anchor.min.js" ></script>
+
+
+
+  <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js" ></script>
+
+
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2.0.11/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+  <script  src="/js/local-search.js" ></script>
+  <script>
+    (function () {
+      var path = "/local-search.xml";
+      $('#local-search-input').on('click', function() {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      });
+      $('#modalSearch').on('shown.bs.modal', function() {
+        $('#local-search-input').focus();
+      });
+    })()
+  </script>
+
+
+
+
+
+  
+
+  
+    <!-- MathJax -->
+    <script>
+      MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']]
+        },
+        options: {
+          renderActions: {
+            findScript: [10, doc => {
+              document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+                const display = !!node.type.match(/; *mode=display/);
+                const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+                const text = document.createTextNode('');
+                node.parentNode.replaceChild(text, node);
+                math.start = { node: text, delim: '', n: 0 };
+                math.end = { node: text, delim: '', n: 0 };
+                doc.math.push(math);
+              });
+            }, '', false],
+            insertedScript: [200, () => {
+              document.querySelectorAll('mjx-container').forEach(node => {
+                let target = node.parentNode;
+                if (target.nodeName.toLowerCase() === 'li') {
+                  target.parentNode.classList.add('has-jax');
+                }
+              });
+            }, '', false]
+          }
+        }
+      };
+    </script>
+
+    <script async src="https://cdn.jsdelivr.net/npm/mathjax@3.1.2/es5/tex-svg.js" ></script>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>
